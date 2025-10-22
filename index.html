@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualizador de Causas Judiciales</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --light: #ecf0f1;
+            --dark: #34495e;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --gray: #95a5a6;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        
+        .upload-section {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            text-align: center;
+            border: 2px dashed #ddd;
+        }
+        
+        .upload-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .upload-btn:hover {
+            background-color: #2980b9;
+        }
+        
+        .file-name {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .stats {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex: 1;
+            min-width: 150px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.75rem 2.5rem 0.75rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+        }
+        
+        .filter-controls {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        select {
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: white;
+            font-size: 0.9rem;
+            min-width: 150px;
+        }
+        
+        .table-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        thead {
+            background-color: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+        
+        th {
+            padding: 1rem 0.75rem;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+        }
+        
+        th:hover {
+            background-color: #e9ecef;
+        }
+        
+        th.sort-asc::after {
+            content: " ▲";
+            font-size: 0.8rem;
+        }
+        
+        th.sort-desc::after {
+            content: " ▼";
+            font-size: 0.8rem;
+        }
+        
+        td {
+            padding: 1rem 0.75rem;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 0.9rem;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            gap: 0.5rem;
+        }
+        
+        .pagination button {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover {
+            background-color: #e9ecef;
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .page-info {
+            margin: 0 1rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .status-en-tramite {
+            background-color: #e1f5fe;
+            color: #0277bd;
+        }
+        
+        .status-finalizado {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+        
+        .status-archivado {
+            background-color: #f5f5f5;
+            color: #616161;
+        }
+        
+        .priority-alta {
+            color: var(--danger);
+            font-weight: 600;
+        }
+        
+        .priority-media {
+            color: var(--warning);
+        }
+        
+        .priority-baja {
+            color: var(--success);
+        }
+        
+        .priority-ninguna {
+            color: var(--gray);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: var(--danger);
+            background-color: #ffebee;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: var(--gray);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            margin: 2rem auto;
+            width: 90%;
+            max-width: 800px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 1rem;
+        }
+        
+        .detail-label {
+            font-weight: 600;
+            width: 200px;
+            flex-shrink: 0;
+        }
+        
+        .detail-value {
+            flex: 1;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+            
+            .table-container {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 1000px;
+            }
+            
+            .stats {
+                flex-direction: column;
+            }
+            
+            .detail-row {
+                flex-direction: column;
+            }
+            
+            .detail-label {
+                width: 100%;
+                margin-bottom: 0.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Visualizador de Causas Judiciales</h1>
+        <div class="subtitle">Carga y visualiza datos de expedientes judiciales desde archivos JSON</div>
+    </header>
+    
+    <div class="container">
+        <div class="upload-section" id="uploadSection">
+            <h2>Cargar archivo JSON</h2>
+            <p>Selecciona un archivo JSON con datos de causas judiciales para visualizarlos</p>
+            <input type="file" id="fileInput" accept=".json" style="display: none;">
+            <button class="upload-btn" id="uploadBtn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                    <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"/>
+                </svg>
+                Seleccionar archivo JSON
+            </button>
+            <div class="file-name" id="fileName">No se ha seleccionado ningún archivo</div>
+        </div>
+        
+        <div id="dataSection" style="display: none;">
+            <div class="stats" id="stats">
+                <!-- Las estadísticas se cargarán dinámicamente -->
+            </div>
+            
+            <div class="controls">
+                <div class="search-box">
+                    <input type="text" id="searchInput" placeholder="Buscar en causas...">
+                    <div class="search-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/>
+                        </svg>
+                    </div>
+                </div>
+                <div class="filter-controls">
+                    <select id="estadoFilter">
+                        <option value="">Todos los estados</option>
+                        <option value="En trámite">En trámite</option>
+                        <option value="Finalizado">Finalizado</option>
+                        <option value="Archivado">Archivado</option>
+                    </select>
+                    <select id="prioridadFilter">
+                        <option value="">Todas las prioridades</option>
+                        <option value="Alta">Alta</option>
+                        <option value="Media">Media</option>
+                        <option value="Baja">Baja</option>
+                        <option value="Ninguna">Ninguna</option>
+                    </select>
+                    <select id="juzgadoFilter">
+                        <option value="">Todos los juzgados</option>
+                    </select>
+                    <select id="tipoProcesoFilter">
+                        <option value="">Todos los tipos</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th data-sort="numCausa">N° Causa</th>
+                            <th data-sort="caratula">Carátula</th>
+                            <th data-sort="juzgado">Juzgado</th>
+                            <th data-sort="estado">Estado</th>
+                            <th data-sort="prioridad">Prioridad</th>
+                            <th data-sort="usuarioAsignado">Usuario Asignado</th>
+                            <th data-sort="intervencion">Intervención</th>
+                            <th data-sort="tipoProceso">Tipo de Proceso</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Los datos se cargarán aquí dinámicamente -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="pagination" id="pagination">
+                <!-- La paginación se generará dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para ver detalles completos -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Detalles de la Causa</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Los detalles se cargarán aquí dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let causasData = [];
+        let currentPage = 1;
+        const itemsPerPage = 10;
+        let filteredData = [];
+        let sortColumn = 'numCausa';
+        let sortDirection = 'asc';
+
+        // Inicializar la aplicación
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            // Botón de carga de archivo
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            // Input de archivo
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            
+            // Filtros y búsqueda
+            document.getElementById('searchInput').addEventListener('input', renderTable);
+            document.getElementById('estadoFilter').addEventListener('change', renderTable);
+            document.getElementById('prioridadFilter').addEventListener('change', renderTable);
+            document.getElementById('juzgadoFilter').addEventListener('change', renderTable);
+            document.getElementById('tipoProcesoFilter').addEventListener('change', renderTable);
+            
+            // Ordenar al hacer clic en los encabezados
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.getAttribute('data-sort');
+                    if (sortColumn === column) {
+                        sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        sortColumn = column;
+                        sortDirection = 'asc';
+                    }
+                    renderTable();
+                });
+            });
+            
+            // Modal
+            document.getElementById('closeModal').addEventListener('click', closeModal);
+            document.getElementById('detailModal').addEventListener('click', function(e) {
+                if (e.target === this) {
+                    closeModal();
+                }
+            });
+        }
+
+        // Manejar la carga de archivos
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Mostrar nombre del archivo
+            document.getElementById('fileName').textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    processData(data);
+                } catch (error) {
+                    showError('Error al procesar el archivo JSON. Asegúrate de que el formato es correcto.');
+                    console.error('Error parsing JSON:', error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Procesar datos cargados
+        function processData(data) {
+            // Verificar si los datos tienen la estructura esperada
+            if (!Array.isArray(data)) {
+                showError('El archivo JSON debe contener un array de causas judiciales.');
+                return;
+            }
+            
+            // Validar que cada elemento tenga la estructura básica esperada
+            const validData = data.filter(item => 
+                item && item.data && (item.data.numCausa || item.data.caratula)
+            );
+            
+            if (validData.length === 0) {
+                showError('No se encontraron datos válidos en el archivo JSON.');
+                return;
+            }
+            
+            causasData = validData;
+            initFilters();
+            renderStats();
+            renderTable();
+            
+            // Mostrar sección de datos
+            document.getElementById('dataSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+        }
+
+        // Inicializar filtros
+        function initFilters() {
+            // Obtener valores únicos para los filtros
+            const juzgados = [...new Set(causasData.map(item => item.data.juzgado))].filter(Boolean);
+            const tiposProceso = [...new Set(causasData.map(item => item.data.tipoProceso))].filter(Boolean);
+            
+            const juzgadoFilter = document.getElementById('juzgadoFilter');
+            juzgadoFilter.innerHTML = '<option value="">Todos los juzgados</option>';
+            juzgados.forEach(juzgado => {
+                const option = document.createElement('option');
+                option.value = juzgado;
+                option.textContent = juzgado;
+                juzgadoFilter.appendChild(option);
+            });
+            
+            const tipoProcesoFilter = document.getElementById('tipoProcesoFilter');
+            tipoProcesoFilter.innerHTML = '<option value="">Todos los tipos</option>';
+            tiposProceso.forEach(tipo => {
+                const option = document.createElement('option');
+                option.value = tipo;
+                option.textContent = tipo;
+                tipoProcesoFilter.appendChild(option);
+            });
+        }
+
+        // Renderizar estadísticas
+        function renderStats() {
+            const statsContainer = document.getElementById('stats');
+            const totalCausas = causasData.length;
+            const enTramite = causasData.filter(item => item.data.estado === 'En trámite').length;
+            const finalizadas = causasData.filter(item => item.data.estado === 'Finalizado').length;
+            const archivadas = causasData.filter(item => item.data.estado === 'Archivado').length;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${totalCausas}</div>
+                    <div class="stat-label">Total Causas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${enTramite}</div>
+                    <div class="stat-label">En Trámite</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${finalizadas}</div>
+                    <div class="stat-label">Finalizadas</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${archivadas}</div>
+                    <div class="stat-label">Archivadas</div>
+                </div>
+            `;
+        }
+
+        // Filtrar y ordenar datos
+        function getFilteredData() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const estadoFilter = document.getElementById('estadoFilter').value;
+            const prioridadFilter = document.getElementById('prioridadFilter').value;
+            const juzgadoFilter = document.getElementById('juzgadoFilter').value;
+            const tipoProcesoFilter = document.getElementById('tipoProcesoFilter').value;
+
+            return causasData.filter(item => {
+                const data = item.data;
+                const matchesSearch = !searchTerm || 
+                    (data.numCausa && data.numCausa.toLowerCase().includes(searchTerm)) ||
+                    (data.caratula && data.caratula.toLowerCase().includes(searchTerm)) ||
+                    (data.juzgado && data.juzgado.toLowerCase().includes(searchTerm)) ||
+                    (data.usuarioAsignado && data.usuarioAsignado.toLowerCase().includes(searchTerm)) ||
+                    (data.observaciones && data.observaciones.toLowerCase().includes(searchTerm));
+                
+                const matchesEstado = !estadoFilter || data.estado === estadoFilter;
+                const matchesPrioridad = !prioridadFilter || data.prioridad === prioridadFilter;
+                const matchesJuzgado = !juzgadoFilter || data.juzgado === juzgadoFilter;
+                const matchesTipoProceso = !tipoProcesoFilter || data.tipoProceso === tipoProcesoFilter;
+                
+                return matchesSearch && matchesEstado && matchesPrioridad && matchesJuzgado && matchesTipoProceso;
+            });
+        }
+
+        // Ordenar datos
+        function sortData(data) {
+            return data.sort((a, b) => {
+                const aValue = a.data[sortColumn] || '';
+                const bValue = b.data[sortColumn] || '';
+                
+                if (sortDirection === 'asc') {
+                    return aValue.localeCompare(bValue);
+                } else {
+                    return bValue.localeCompare(aValue);
+                }
+            });
+        }
+
+        // Renderizar la tabla
+        function renderTable() {
+            filteredData = getFilteredData();
+            const sortedData = sortData([...filteredData]);
+            
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const pageData = sortedData.slice(startIndex, endIndex);
+            
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+            
+            if (pageData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="9" class="no-data">No se encontraron resultados</td></tr>';
+            } else {
+                pageData.forEach(item => {
+                    const data = item.data;
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td>${data.numCausa || ''}</td>
+                        <td>${data.caratula || ''}</td>
+                        <td>${data.juzgado || ''}</td>
+                        <td><span class="status-badge status-${getEstadoClass(data.estado)}">${data.estado || ''}</span></td>
+                        <td class="priority-${getPrioridadClass(data.prioridad)}">${data.prioridad || ''}</td>
+                        <td>${data.usuarioAsignado || ''}</td>
+                        <td>${data.intervencion || ''}</td>
+                        <td>${data.tipoProceso || ''}</td>
+                        <td><button class="view-details" data-id="${item.id}">Ver detalles</button></td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                // Añadir event listeners a los botones de detalles
+                document.querySelectorAll('.view-details').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        showDetails(id);
+                    });
+                });
+            }
+            
+            renderPagination(sortedData.length);
+            updateSortIndicators();
+        }
+
+        // Obtener clase CSS para el estado
+        function getEstadoClass(estado) {
+            if (!estado) return '';
+            
+            switch(estado.toLowerCase()) {
+                case 'en trámite': return 'en-tramite';
+                case 'finalizado': return 'finalizado';
+                case 'archivado': return 'archivado';
+                default: return '';
+            }
+        }
+
+        // Obtener clase CSS para la prioridad
+        function getPrioridadClass(prioridad) {
+            if (!prioridad) return '';
+            
+            switch(prioridad.toLowerCase()) {
+                case 'alta': return 'alta';
+                case 'media': return 'media';
+                case 'baja': return 'baja';
+                case 'ninguna': return 'ninguna';
+                default: return '';
+            }
+        }
+
+        // Actualizar indicadores de ordenamiento
+        function updateSortIndicators() {
+            document.querySelectorAll('th[data-sort]').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+                
+                if (th.getAttribute('data-sort') === sortColumn) {
+                    th.classList.add(sortDirection === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+        }
+
+        // Renderizar paginación
+        function renderPagination(totalItems) {
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            if (totalPages <= 1) {
+                pagination.innerHTML = `<div class="page-info">Mostrando ${totalItems} resultados</div>`;
+                return;
+            }
+            
+            // Botón anterior
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Anterior';
+            prevButton.disabled = currentPage === 1;
+            prevButton.addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(prevButton);
+            
+            // Números de página
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+            
+            // Primera página si no está en el rango
+            if (startPage > 1) {
+                const firstButton = document.createElement('button');
+                firstButton.textContent = '1';
+                firstButton.addEventListener('click', () => {
+                    currentPage = 1;
+                    renderTable();
+                });
+                pagination.appendChild(firstButton);
+                
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0.5rem';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Páginas en el rango
+            for (let i = startPage; i <= endPage; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.classList.toggle('active', i === currentPage);
+                pageButton.addEventListener('click', () => {
+                    currentPage = i;
+                    renderTable();
+                });
+                pagination.appendChild(pageButton);
+            }
+            
+            // Última página si no está en el rango
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '0.5rem';
+                    pagination.appendChild(ellipsis);
+                }
+                
+                const lastButton = document.createElement('button');
+                lastButton.textContent = totalPages;
+                lastButton.addEventListener('click', () => {
+                    currentPage = totalPages;
+                    renderTable();
+                });
+                pagination.appendChild(lastButton);
+            }
+            
+            // Botón siguiente
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Siguiente';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.addEventListener('click', () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    renderTable();
+                }
+            });
+            pagination.appendChild(nextButton);
+            
+            // Información de página
+            const pageInfo = document.createElement('div');
+            pageInfo.className = 'page-info';
+            const startItem = (currentPage - 1) * itemsPerPage + 1;
+            const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+            pageInfo.textContent = `Mostrando ${startItem}-${endItem} de ${totalItems} resultados`;
+            pagination.appendChild(pageInfo);
+        }
+
+        // Mostrar detalles de una causa
+        function showDetails(id) {
+            const causa = causasData.find(item => item.id === id);
+            if (!causa) return;
+            
+            const data = causa.data;
+            document.getElementById('modalTitle').textContent = `Causa: ${data.numCausa || 'Sin número'}`;
+            
+            const modalBody = document.getElementById('modalBody');
+            modalBody.innerHTML = `
+                <div class="detail-row">
+                    <div class="detail-label">Número de Causa:</div>
+                    <div class="detail-value">${data.numCausa || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Carátula:</div>
+                    <div class="detail-value">${data.caratula || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Juzgado:</div>
+                    <div class="detail-value">${data.juzgado || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Estado:</div>
+                    <div class="detail-value"><span class="status-badge status-${getEstadoClass(data.estado)}">${data.estado || 'No especificado'}</span></div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Prioridad:</div>
+                    <div class="detail-value priority-${getPrioridadClass(data.prioridad)}">${data.prioridad || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Usuario Asignado:</div>
+                    <div class="detail-value">${data.usuarioAsignado || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Intervención:</div>
+                    <div class="detail-value">${data.intervencion || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Tipo de Proceso:</div>
+                    <div class="detail-value">${data.tipoProceso || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Datos NNyA:</div>
+                    <div class="detail-value">${data.datosNnya || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Observaciones:</div>
+                    <div class="detail-value">${data.observaciones || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Recursos:</div>
+                    <div class="detail-value">${data.recursos || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Estado de Recursos:</div>
+                    <div class="detail-value">${data.estadoRecursos || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Contestación de Recursos:</div>
+                    <div class="detail-value">${data.recursosContestacion || 'No especificado'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">Audiencia Gesell:</div>
+                    <div class="detail-value">${data.audienciaGesell ? 'Programada' : 'No programada'}</div>
+                </div>
+                <div class="detail-row">
+                    <div class="detail-label">NNyA Gesell:</div>
+                    <div class="detail-value">${data.nnyaGesell || 'No especificado'}</div>
+                </div>
+            `;
+            
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        // Cerrar modal
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        // Mostrar error
+        function showError(message) {
+            const container = document.querySelector('.container');
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.textContent = message;
+            container.insertBefore(errorDiv, container.firstChild);
+            
+            // Ocultar error después de 5 segundos
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
