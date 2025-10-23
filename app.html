@@ -726,9 +726,9 @@
             document.getElementById('closeConfirmBtn').addEventListener('click', closeApp);
             document.getElementById('closeCancelBtn').addEventListener('click', hideCloseAlert);
             
-            // Botón Firebase
+            // Botón Firebase - CORREGIDO: Ahora abre la aplicación HTML directamente
             document.getElementById('firebaseBtn').addEventListener('click', function() {
-                window.open('    app-resguardo-sistema/Firestore Exportar Eliminar Registros.html');
+                window.open('https://personal2025rf.github.io/app-resguardo-sistema/Firestore%20Exportar%20Eliminar%20Registros.html', '_blank');
             });
         }
 
@@ -742,9 +742,8 @@
             document.getElementById('closeAlert').style.display = 'none';
         }
 
-        // Cerrar aplicación
+        // Cerrar aplicación - CORREGIDO: Ahora redirige correctamente a index.html
         function closeApp() {
-            // Redirigir a index.html
             window.location.href = 'index.html';
         }
 
