@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Digital de Expedientes</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #0c2461, #1e3799);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.05) 0%, transparent 20%),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.05) 0%, transparent 20%);
+            z-index: 0;
+        }
+
+        .id-card-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            z-index: 1;
+        }
+
+        .id-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 16px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            display: flex;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .id-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* Patrón de seguridad de documento oficial */
+        .id-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(45deg, transparent 49%, rgba(30, 60, 114, 0.03) 50%, transparent 51%),
+                linear-gradient(-45deg, transparent 49%, rgba(30, 60, 114, 0.03) 50%, transparent 51%);
+            background-size: 15px 15px;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .card-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 10px;
+            background: linear-gradient(90deg, #1e3c72, #2a5298, #1e3c72);
+            z-index: 2;
+        }
+
+        .card-side {
+            flex: 1;
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .id-side {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .id-side::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .logo-container {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .official-logo {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .app-title {
+            font-size: 20px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .app-subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        .document-id {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.8;
+        }
+
+        .biometric-section {
+            margin: 25px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .fingerprint-icon {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 32px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fingerprint-icon::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            border-radius: 50%;
+        }
+
+        .fingerprint-icon.active {
+            background: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 25px rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
+        }
+
+        .fingerprint-text {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .biometric-status {
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+        }
+
+        .status-dot.inactive {
+            background-color: #e74c3c;
+        }
+
+        .security-features {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .feature-icon {
+            font-size: 14px;
+        }
+
+        .form-side {
+            padding: 40px 30px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: white;
+        }
+
+        .form-side h2 {
+            color: #1e3c72;
+            margin-bottom: 25px;
+            font-size: 22px;
+            font-weight: 600;
+            text-align: center;
+            position: relative;
+        }
+
+        .form-side h2::after {
+            content: "";
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 50px;
+            height: 3px;
+            background: linear-gradient(90deg, #1e3c72, #2a5298);
+            border-radius: 2px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #1e3c72;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e7ff;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background: #f8faff;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(30, 60, 114, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .login-btn::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(30, 60, 114, 0.4);
+        }
+
+        .login-btn:hover::before {
+            left: 100%;
+        }
+
+        .biometric-btn {
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 14px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(39, 174, 96, 0.3);
+            display: none;
+        }
+
+        .biometric-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(39, 174, 96, 0.4);
+        }
+
+        .biometric-btn:disabled {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .links {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .link {
+            color: #1e3c72;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-align: center;
+            position: relative;
+            padding: 5px 0;
+        }
+
+        .link::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 0;
+            height: 1px;
+            background: #1e3c72;
+            transition: all 0.3s;
+        }
+
+        .link:hover {
+            color: #2a5298;
+        }
+
+        .link:hover::after {
+            width: 100%;
+            left: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal-content::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #1e3c72, #2a5298);
+        }
+
+        .modal h2 {
+            color: #1e3c72;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .confirm-btn {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+        }
+
+        .cancel-btn {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+            padding: 10px;
+            background: rgba(231, 76, 60, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #e74c3c;
+        }
+
+        .success-message {
+            color: #2ecc71;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            display: none;
+            padding: 10px;
+            background: rgba(46, 204, 113, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #2ecc71;
+        }
+
+        .user-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: left;
+            border-left: 4px solid #1e3c72;
+        }
+
+        .user-info h3 {
+            color: #1e3c72;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-top: 10px;
+            transition: all 0.3s;
+        }
+
+        .logout-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(231, 76, 60, 0.3);
+        }
+
+        @media (max-width: 768px) {
+            .id-card {
+                flex-direction: column;
+                max-width: 450px;
+            }
+            
+            .card-side {
+                padding: 30px 25px;
+            }
+            
+            .biometric-btn {
+                display: block;
+            }
+        }
+
+        /* Efectos de seguridad de documento */
+        .security-strip {
+            position: absolute;
+            top: 40%;
+            left: 0;
+            right: 0;
+            height: 30px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            transform: skewY(-5deg);
+            z-index: 1;
+        }
+
+        .holo-effect {
+            position: absolute;
+            top: 20%;
+            right: 10%;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.7) 50%, transparent 60%);
+            border-radius: 50%;
+            z-index: 1;
+            opacity: 0.7;
+        }
+
+        /* Animación para el escáner de huella */
+        @keyframes scan {
+            0% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(20px); opacity: 0.7; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        .scan-animation {
+            animation: scan 1.5s ease-in-out infinite;
+        }
+
+        /* Microtexto de seguridad */
+        .microtext {
+            position: absolute;
+            bottom: 15px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 8px;
+            opacity: 0.6;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="id-card-container">
+        <div class="id-card">
+            <div class="card-header"></div>
+            <div class="security-strip"></div>
+            <div class="holo-effect"></div>
+            
+            <!-- Lado de identificación oficial -->
+            <div class="card-side id-side">
+                <div class="logo-container">
+                    <div class="official-logo">⚖️</div>
+                    <h1 class="app-title">Sistema Digital de Expedientes</h1>
+                    <div class="app-subtitle">Defensoria Civil y Comercial 6<br>Poder Judicial de Misiones</div>
+                    <div class="document-id">Acceso Exclusivo Defensor-Secretarios</div>
+                </div>
+                
+                <div class="biometric-section">
+                    <div class="fingerprint-icon" id="fingerprintIcon">🖐️</div>
+                    <div class="fingerprint-text">Identificación Biométrica</div>
+                    <div class="biometric-status">
+                        <div class="status-dot" id="statusDot"></div>
+                        <span id="biometricStatusText">Comprobando compatibilidad...</span>
+                    </div>
+                </div>
+                
+                <div class="security-features">
+                    <div class="feature">
+                        <span class="feature-icon">🔒</span>
+                        <span>Autenticación Segura</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">🛡️</span>
+                        <span>Protegido con Cifrado</span>
+                    </div>
+                    <div class="feature">
+                        <span class="feature-icon">📱</span>
+                        <span>Acceso Biométrico Móvil</span>
+                    </div>
+                </div>
+                
+                <div class="microtext">
+                    DISEÑO Y PROGRAMACION ROMULO FIORAVANTE 2025
+                </div>
+            </div>
+            
+            <!-- Lado del formulario -->
+            <div class="card-side form-side">
+                <h2>Acceder al Sistema</h2>
+                
+                <!-- Mensajes de estado -->
+                <div class="error-message" id="errorMessage"></div>
+                <div class="success-message" id="successMessage"></div>
+                
+                <!-- Información del usuario cuando está logueado -->
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <h3>Información de Usuario</h3>
+                    <p id="userEmail"></p>
+                    <button class="logout-btn" id="logoutBtn">Cerrar Sesión</button>
+                </div>
+                
+                <!-- Formulario de login/registro -->
+                <form id="authForm">
+                    <div class="input-group">
+                        <label for="email">Correo Electrónico</label>
+                        <input type="email" id="email" placeholder="usuario@jusmisiones.gov.ar" required>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="password">Contraseña</label>
+                        <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                    </div>
+                    
+                    <button type="submit" class="login-btn" id="submitBtn">Ingresar al Sistema</button>
+                    
+                    <!-- Botón para autenticación biométrica (solo visible en móviles) -->
+                    <button type="button" class="biometric-btn" id="biometricBtn">
+                        <span id="biometricBtnText">Iniciar sesión con huella digital</span>
+                    </button>
+                </form>
+                
+                <div class="links">
+                    <a class="link" id="toggleForm">Crear nueva cuenta</a>
+                    <a class="link" id="forgotCredentials">Olvidé mi usuario y contraseña</a>
+                    <a class="link" id="closeApp">Cerrar aplicación</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para cerrar aplicación -->
+    <div class="modal" id="closeModal">
+        <div class="modal-content">
+            <h2 style="color: #e74c3c;">Cerrar Aplicación</h2>
+            <p>¿Estás seguro de que deseas cerrar la aplicación? Se cerrará la ventana del navegador.</p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm-btn" id="confirmClose">Sí, Cerrar</button>
+                <button class="modal-btn cancel-btn" id="cancelClose">Cancelar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para recuperar contraseña -->
+    <div class="modal" id="forgotCredentialsModal">
+        <div class="modal-content">
+            <h2>Recuperar Contraseña</h2>
+            <p>Introduce tu correo electrónico para recuperar tu contraseña.</p>
+            <input type="email" id="recoveryEmail" placeholder="Correo electrónico" style="width: 100%; margin: 15px 0;">
+            <div class="modal-buttons">
+                <button class="modal-btn confirm-btn" id="sendRecovery">Enviar</button>
+                <button class="modal-btn cancel-btn" id="cancelRecovery">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para registro biométrico -->
+    <div class="modal" id="biometricRegisterModal">
+        <div class="modal-content">
+            <h2>Registro Biométrico</h2>
+            <p>¿Deseas registrar tu huella digital para accesos futuros?</p>
+            <div class="modal-buttons">
+                <button class="modal-btn confirm-btn" id="confirmBiometricRegister">Sí, Registrar</button>
+                <button class="modal-btn cancel-btn" id="cancelBiometricRegister">Ahora no</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBDXZYAxWsvMiMGCrPRp3EBVuU0dzuWF4M",
+            authDomain: "sistemadefensoria6.firebaseapp.com",
+            projectId: "sistemadefensoria6",
+            storageBucket: "sistemadefensoria6.firebasestorage.app",
+            messagingSenderId: "1024631392849",
+            appId: "1:1024631392849:web:1dc13292e690e2ed100670"
+        };
+
+        // Inicializar Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+
+        // Referencias a elementos del DOM
+        const authForm = document.getElementById('authForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submitBtn');
+        const toggleFormLink = document.getElementById('toggleForm');
+        const closeAppLink = document.getElementById('closeApp');
+        const forgotCredentialsLink = document.getElementById('forgotCredentials');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const userInfo = document.getElementById('userInfo');
+        const userEmail = document.getElementById('userEmail');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const fingerprintIcon = document.getElementById('fingerprintIcon');
+        const biometricBtn = document.getElementById('biometricBtn');
+        const biometricBtnText = document.getElementById('biometricBtnText');
+        const statusDot = document.getElementById('statusDot');
+        const biometricStatusText = document.getElementById('biometricStatusText');
+        
+        // Modales
+        const closeModal = document.getElementById('closeModal');
+        const forgotCredentialsModal = document.getElementById('forgotCredentialsModal');
+        const biometricRegisterModal = document.getElementById('biometricRegisterModal');
+        
+        // Botones de los modales
+        const confirmCloseBtn = document.getElementById('confirmClose');
+        const cancelCloseBtn = document.getElementById('cancelClose');
+        const sendRecoveryBtn = document.getElementById('sendRecovery');
+        const cancelRecoveryBtn = document.getElementById('cancelRecovery');
+        const confirmBiometricRegisterBtn = document.getElementById('confirmBiometricRegister');
+        const cancelBiometricRegisterBtn = document.getElementById('cancelBiometricRegister');
+        
+        // Estado del formulario (login o registro)
+        let isLoginMode = true;
+        
+        // Estado de autenticación biométrica
+        let isBiometricSupported = false;
+        let biometricCredentials = JSON.parse(localStorage.getItem('biometricCredentials') || '{}');
+
+        // Funciones de utilidad
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            successMessage.style.display = 'none';
+        }
+
+        function showSuccess(message) {
+            successMessage.textContent = message;
+            successMessage.style.display = 'block';
+            errorMessage.style.display = 'none';
+        }
+
+        function clearMessages() {
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        }
+
+        function showModal(modal) {
+            modal.style.display = 'flex';
+        }
+        
+        function hideModal(modal) {
+            modal.style.display = 'none';
+        }
+
+        function updateUI(user) {
+            if (user) {
+                // Usuario autenticado - redirigir a app.html
+                window.location.href = 'app.html';
+            } else {
+                // Usuario no autenticado
+                userInfo.style.display = 'none';
+                authForm.style.display = 'block';
+                submitBtn.textContent = isLoginMode ? 'Ingresar al Sistema' : 'Registrarse';
+                toggleFormLink.textContent = isLoginMode ? 'Crear nueva cuenta' : 'Iniciar Sesión';
+                clearMessages();
+            }
+        }
+
+        // Verificar compatibilidad con autenticación biométrica
+        function checkBiometricSupport() {
+            if (window.PublicKeyCredential) {
+                // Verificar si el dispositivo es móvil
+                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                
+                if (isMobile) {
+                    isBiometricSupported = true;
+                    statusDot.classList.remove('inactive');
+                    biometricStatusText.textContent = 'Biometría disponible';
+                    biometricBtn.disabled = false;
+                    
+                    // Verificar si ya hay credenciales guardadas
+                    if (Object.keys(biometricCredentials).length > 0) {
+                        biometricBtnText.textContent = 'Iniciar sesión con huella digital';
+                    } else {
+                        biometricBtnText.textContent = 'Registrar huella digital';
+                    }
+                } else {
+                    isBiometricSupported = false;
+                    statusDot.classList.add('inactive');
+                    biometricStatusText.textContent = 'Biometría solo disponible en dispositivos móviles';
+                    biometricBtn.disabled = true;
+                }
+            } else {
+                isBiometricSupported = false;
+                statusDot.classList.add('inactive');
+                biometricStatusText.textContent = 'Biometría no compatible con este navegador';
+                biometricBtn.disabled = true;
+            }
+        }
+
+        // Simulación de autenticación biométrica (en un caso real usaríamos WebAuthn)
+        function simulateBiometricAuth() {
+            return new Promise((resolve, reject) => {
+                // Añadir animación al ícono de huella
+                fingerprintIcon.classList.add('scan-animation');
+                biometricBtn.disabled = true;
+                biometricBtnText.textContent = 'Escaneando huella...';
+                
+                // Simular proceso de autenticación
+                setTimeout(() => {
+                    fingerprintIcon.classList.remove('scan-animation');
+                    
+                    // Verificar si hay credenciales guardadas
+                    if (Object.keys(biometricCredentials).length > 0) {
+                        // Simular autenticación exitosa
+                        resolve({
+                            success: true,
+                            email: biometricCredentials.email,
+                            message: 'Autenticación biométrica exitosa'
+                        });
+                    } else {
+                        // No hay credenciales registradas
+                        reject({
+                            success: false,
+                            message: 'No hay huella digital registrada. Por favor, regístrala primero.'
+                        });
+                    }
+                }, 2000);
+            });
+        }
+
+        // Registrar credenciales biométricas
+        function registerBiometricCredentials(email) {
+            return new Promise((resolve, reject) => {
+                // Añadir animación al ícono de huella
+                fingerprintIcon.classList.add('scan-animation');
+                biometricBtn.disabled = true;
+                biometricBtnText.textContent = 'Registrando huella...';
+                
+                // Simular proceso de registro
+                setTimeout(() => {
+                    fingerprintIcon.classList.remove('scan-animation');
+                    
+                    // Guardar credenciales simuladas
+                    biometricCredentials = {
+                        email: email,
+                        registeredAt: new Date().toISOString()
+                    };
+                    
+                    localStorage.setItem('biometricCredentials', JSON.stringify(biometricCredentials));
+                    
+                    resolve({
+                        success: true,
+                        message: 'Huella digital registrada correctamente'
+                    });
+                }, 2000);
+            });
+        }
+
+        // Función para cerrar la aplicación
+        function closeApplication() {
+            // Intentar cerrar la ventana
+            if (window.close) {
+                window.close();
+            } else {
+                // Si window.close no funciona, intentar con otros métodos
+                try {
+                    // Para navegadores modernos
+                    window.open('', '_self', '');
+                    window.close();
+                } catch (e) {
+                    // Si no se puede cerrar, mostrar mensaje
+                    showError("No se puede cerrar la ventana automáticamente. Por favor, cierre la pestaña manualmente.");
+                    // Intentar redirigir a página en blanco
+                    document.body.innerHTML = '<h1 style="text-align:center;margin-top:50px;">Aplicación cerrada</h1>';
+                }
+            }
+        }
+
+        // Eventos del formulario de autenticación
+        authForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            clearMessages();
+            
+            const email = emailInput.value;
+            const password = passwordInput.value;
+            
+            if (isLoginMode) {
+                // Iniciar sesión
+                auth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        showSuccess('¡Inicio de sesión exitoso!');
+                        
+                        // Ofrecer registro biométrico si está en móvil y no tiene credenciales guardadas
+                        if (isBiometricSupported && Object.keys(biometricCredentials).length === 0) {
+                            setTimeout(() => {
+                                showModal(biometricRegisterModal);
+                            }, 1000);
+                        } else {
+                            // Redirigir después de un breve delay
+                            setTimeout(() => {
+                                window.location.href = 'app.html';
+                            }, 1500);
+                        }
+                    })
+                    .catch((error) => {
+                        showError('Error al iniciar sesión: ' + error.message);
+                    });
+            } else {
+                // Crear cuenta
+                auth.createUserWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        showSuccess('¡Cuenta creada exitosamente!');
+                        // Después de crear cuenta, cambiar a modo login
+                        isLoginMode = true;
+                        updateUI(auth.currentUser);
+                    })
+                    .catch((error) => {
+                        showError('Error al crear cuenta: ' + error.message);
+                    });
+            }
+        });
+
+        // Cambiar entre login y registro
+        toggleFormLink.addEventListener('click', function() {
+            isLoginMode = !isLoginMode;
+            updateUI(auth.currentUser);
+            clearMessages();
+        });
+
+        // Cerrar sesión
+        logoutBtn.addEventListener('click', function() {
+            auth.signOut()
+                .then(() => {
+                    showSuccess('Sesión cerrada correctamente');
+                })
+                .catch((error) => {
+                    showError('Error al cerrar sesión: ' + error.message);
+                });
+        });
+
+        // Eventos para mostrar modales
+        closeAppLink.addEventListener('click', function() {
+            showModal(closeModal);
+        });
+        
+        forgotCredentialsLink.addEventListener('click', function() {
+            showModal(forgotCredentialsModal);
+        });
+
+        // Eventos para cerrar modales
+        cancelCloseBtn.addEventListener('click', function() {
+            hideModal(closeModal);
+        });
+        
+        cancelRecoveryBtn.addEventListener('click', function() {
+            hideModal(forgotCredentialsModal);
+        });
+
+        // Evento para cerrar aplicación
+        confirmCloseBtn.addEventListener('click', function() {
+            hideModal(closeModal);
+            // Pequeño retraso para que el usuario vea que se cierra el modal
+            setTimeout(closeApplication, 300);
+        });
+
+        // Evento para enviar recuperación de contraseña
+        sendRecoveryBtn.addEventListener('click', function() {
+            const recoveryEmail = document.getElementById('recoveryEmail').value;
+            if (recoveryEmail) {
+                auth.sendPasswordResetEmail(recoveryEmail)
+                    .then(() => {
+                        showSuccess('Se ha enviado un enlace de recuperación a tu correo');
+                        hideModal(forgotCredentialsModal);
+                        document.getElementById('recoveryEmail').value = '';
+                    })
+                    .catch((error) => {
+                        showError('Error al enviar correo de recuperación: ' + error.message);
+                    });
+            } else {
+                showError('Por favor, introduce tu correo electrónico');
+            }
+        });
+
+        // Autenticación biométrica
+        biometricBtn.addEventListener('click', function() {
+            clearMessages();
+            
+            if (Object.keys(biometricCredentials).length > 0) {
+                // Autenticar con huella existente
+                simulateBiometricAuth()
+                    .then(result => {
+                        showSuccess(result.message);
+                        
+                        // Iniciar sesión con Firebase usando las credenciales guardadas
+                        auth.signInWithEmailAndPassword(biometricCredentials.email, "dummyPassword")
+                            .then((userCredential) => {
+                                // Redirigir después de un breve delay
+                                setTimeout(() => {
+                                    window.location.href = 'app.html';
+                                }, 1500);
+                            })
+                            .catch((error) => {
+                                // Si falla, mostrar formulario normal
+                                showError('Error en autenticación biométrica. Usa tu correo y contraseña.');
+                                biometricBtnText.textContent = 'Iniciar sesión con huella digital';
+                                biometricBtn.disabled = false;
+                            });
+                    })
+                    .catch(error => {
+                        showError(error.message);
+                        biometricBtnText.textContent = 'Iniciar sesión con huella digital';
+                        biometricBtn.disabled = false;
+                    });
+            } else {
+                // Registrar nueva huella (solo después de iniciar sesión normal)
+                showError('Primero inicia sesión con tu correo y contraseña para registrar tu huella.');
+            }
+        });
+
+        // Registrar huella biométrica después del login exitoso
+        confirmBiometricRegisterBtn.addEventListener('click', function() {
+            hideModal(biometricRegisterModal);
+            const user = auth.currentUser;
+            
+            if (user) {
+                registerBiometricCredentials(user.email)
+                    .then(result => {
+                        showSuccess(result.message);
+                        biometricBtnText.textContent = 'Iniciar sesión con huella digital';
+                        biometricBtn.disabled = false;
+                        
+                        // Redirigir después de un breve delay
+                        setTimeout(() => {
+                            window.location.href = 'app.html';
+                        }, 1500);
+                    })
+                    .catch(error => {
+                        showError(error.message);
+                        biometricBtnText.textContent = 'Registrar huella digital';
+                        biometricBtn.disabled = false;
+                    });
+            }
+        });
+
+        cancelBiometricRegisterBtn.addEventListener('click', function() {
+            hideModal(biometricRegisterModal);
+            // Redirigir sin registrar huella
+            setTimeout(() => {
+                window.location.href = 'app.html';
+            }, 500);
+        });
+
+        // Clic en el ícono de huella (alternativa al botón)
+        fingerprintIcon.addEventListener('click', function() {
+            if (isBiometricSupported) {
+                biometricBtn.click();
+            }
+        });
+
+        // Cerrar modales haciendo clic fuera del contenido
+        window.addEventListener('click', function(e) {
+            if (e.target === closeModal) hideModal(closeModal);
+            if (e.target === forgotCredentialsModal) hideModal(forgotCredentialsModal);
+            if (e.target === biometricRegisterModal) hideModal(biometricRegisterModal);
+        });
+
+        // Observador de estado de autenticación
+        auth.onAuthStateChanged((user) => {
+            updateUI(user);
+        });
+
+        // Inicializar UI y verificar compatibilidad biométrica
+        updateUI(auth.currentUser);
+        checkBiometricSupport();
+    </script>
+</body>
+</html>
