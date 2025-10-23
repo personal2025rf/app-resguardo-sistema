@@ -14,6 +14,7 @@
             --warning: #f39c12;
             --danger: #e74c3c;
             --gray: #95a5a6;
+            --firebase: #FFA000;
         }
         
         * {
@@ -377,11 +378,16 @@
             flex: 1;
         }
         
-        /* Estilos para el botón de cerrar aplicación */
-        .close-app-btn {
+        /* Estilos para los botones del header */
+        .header-buttons {
             position: absolute;
             top: 1.5rem;
             right: 1.5rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .close-app-btn {
             background-color: var(--danger);
             color: white;
             border: none;
@@ -398,6 +404,25 @@
         
         .close-app-btn:hover {
             background-color: #c0392b;
+        }
+        
+        .firebase-btn {
+            background-color: var(--firebase);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .firebase-btn:hover {
+            background-color: #FF8F00;
         }
         
         /* Estilos para la alerta de cierre */
@@ -498,12 +523,17 @@
                 margin-bottom: 0.5rem;
             }
             
-            /* Responsivo para el botón de cerrar */
-            .close-app-btn {
+            /* Responsivo para los botones del header */
+            .header-buttons {
                 position: relative;
                 top: auto;
                 right: auto;
-                margin: 1rem auto 0;
+                justify-content: center;
+                margin-top: 1rem;
+                flex-wrap: wrap;
+            }
+            
+            .close-app-btn, .firebase-btn {
                 width: 150px;
                 justify-content: center;
             }
@@ -518,12 +548,20 @@
     <header>
         <h1>Visualizador de Causas Judiciales</h1>
         <div class="subtitle">Carga y visualiza datos de expedientes judiciales desde archivos JSON</div>
-        <button id="closeAppBtn" class="close-app-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
-            </svg>
-            Cerrar
-        </button>
+        <div class="header-buttons">
+            <button id="firebaseBtn" class="firebase-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M5.921 11.9 4.352 7.719a.515.515 0 0 0-.611-.35l-.907.214a1.472 1.472 0 0 0-.738.404 1.47 1.47 0 0 0-.404.738l-.214.907a.515.515 0 0 0 .35.611l4.182 1.569a.515.515 0 0 0 .611-.35l.214-.907a1.47 1.47 0 0 0-.404-.738 1.47 1.47 0 0 0-.738-.404l-.907-.214a.515.515 0 0 1-.35-.611l1.569-4.182a.515.515 0 0 1 .611-.35l.907.214a1.47 1.47 0 0 1 .738.404 1.47 1.47 0 0 1 .404.738l.214.907a.515.515 0 0 1-.35.611l-4.182 1.569a.515.515 0 0 1-.611-.35l-.214-.907a1.47 1.47 0 0 0-.404-.738 1.47 1.47 0 0 0-.738-.404l-.907-.214a.515.515 0 0 0-.611.35L2.1 10.079a.515.515 0 0 0 .35.611l.907.214a1.47 1.47 0 0 1 .738.404 1.47 1.47 0 0 1 .404.738l.214.907a.515.515 0 0 0 .611.35l4.182-1.569a.515.515 0 0 0 .35-.611l-.214-.907a1.47 1.47 0 0 0-.404-.738 1.47 1.47 0 0 0-.738-.404l-.907-.214a.515.515 0 0 1-.35-.611l1.569-4.182a.515.515 0 0 1 .611-.35l.907.214a1.47 1.47 0 0 1 .738.404 1.47 1.47 0 0 1 .404.738l.214.907a.515.515 0 0 1-.35.611l-4.182 1.569a.515.515 0 0 1-.611-.35l-.214-.907a1.47 1.47 0 0 0-.404-.738 1.47 1.47 0 0 0-.738-.404l-.907-.214a.515.515 0 0 0-.611.35L5.921 11.9z"/>
+                </svg>
+                Firebase Causas
+            </button>
+            <button id="closeAppBtn" class="close-app-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+                </svg>
+                Cerrar
+            </button>
+        </div>
     </header>
     
     <div class="container">
@@ -687,6 +725,11 @@
             document.getElementById('closeAppBtn').addEventListener('click', showCloseAlert);
             document.getElementById('closeConfirmBtn').addEventListener('click', closeApp);
             document.getElementById('closeCancelBtn').addEventListener('click', hideCloseAlert);
+            
+            // Botón Firebase
+            document.getElementById('firebaseBtn').addEventListener('click', function() {
+                window.open('    app-resguardo-sistema/Firestore Exportar Eliminar Registros.html');
+            });
         }
 
         // Mostrar alerta de cierre
