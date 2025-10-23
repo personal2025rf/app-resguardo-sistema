@@ -35,6 +35,7 @@
             padding: 1.5rem;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: relative;
         }
         
         h1 {
@@ -376,6 +377,101 @@
             flex: 1;
         }
         
+        /* Estilos para el botón de cerrar aplicación */
+        .close-app-btn {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .close-app-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        /* Estilos para la alerta de cierre */
+        .close-alert {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+        
+        .close-alert-content {
+            background-color: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+            border-top: 5px solid var(--danger);
+        }
+        
+        .close-alert h3 {
+            color: var(--danger);
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        .close-alert p {
+            margin-bottom: 1.5rem;
+            color: var(--dark);
+        }
+        
+        .close-alert-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+        }
+        
+        .close-confirm-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .close-confirm-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .close-cancel-btn {
+            background-color: var(--gray);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .close-cancel-btn:hover {
+            background-color: #7f8c8d;
+        }
+        
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -401,6 +497,20 @@
                 width: 100%;
                 margin-bottom: 0.5rem;
             }
+            
+            /* Responsivo para el botón de cerrar */
+            .close-app-btn {
+                position: relative;
+                top: auto;
+                right: auto;
+                margin: 1rem auto 0;
+                width: 150px;
+                justify-content: center;
+            }
+            
+            header {
+                padding-bottom: 4rem;
+            }
         }
     </style>
 </head>
@@ -408,6 +518,12 @@
     <header>
         <h1>Visualizador de Causas Judiciales</h1>
         <div class="subtitle">Carga y visualiza datos de expedientes judiciales desde archivos JSON</div>
+        <button id="closeAppBtn" class="close-app-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M2.146 2.854a.5.5 0 1 1 .708-.708L8 7.293l5.146-5.147a.5.5 0 0 1 .708.708L8.707 8l5.147 5.146a.5.5 0 0 1-.708.708L8 8.707l-5.146 5.147a.5.5 0 0 1-.708-.708L7.293 8 2.146 2.854Z"/>
+            </svg>
+            Cerrar
+        </button>
     </header>
     
     <div class="container">
@@ -502,6 +618,18 @@
         </div>
     </div>
 
+    <!-- Alerta de cierre de aplicación -->
+    <div class="close-alert" id="closeAlert" style="display: none;">
+        <div class="close-alert-content">
+            <h3>¿Está seguro de que desea cerrar la aplicación?</h3>
+            <p>Todos los datos no guardados se perderán. Esta acción no se puede deshacer.</p>
+            <div class="close-alert-buttons">
+                <button id="closeConfirmBtn" class="close-confirm-btn">Sí, cerrar aplicación</button>
+                <button id="closeCancelBtn" class="close-cancel-btn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Variables globales
         let causasData = [];
@@ -554,6 +682,27 @@
                     closeModal();
                 }
             });
+            
+            // Cerrar aplicación
+            document.getElementById('closeAppBtn').addEventListener('click', showCloseAlert);
+            document.getElementById('closeConfirmBtn').addEventListener('click', closeApp);
+            document.getElementById('closeCancelBtn').addEventListener('click', hideCloseAlert);
+        }
+
+        // Mostrar alerta de cierre
+        function showCloseAlert() {
+            document.getElementById('closeAlert').style.display = 'flex';
+        }
+
+        // Ocultar alerta de cierre
+        function hideCloseAlert() {
+            document.getElementById('closeAlert').style.display = 'none';
+        }
+
+        // Cerrar aplicación
+        function closeApp() {
+            // Redirigir a index.html
+            window.location.href = 'index.html';
         }
 
         // Manejar la carga de archivos
